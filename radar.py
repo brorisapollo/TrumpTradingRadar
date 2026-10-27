@@ -330,5 +330,8 @@ def main():
     )
 
 
+if os.environ.get("TEST_TELEGRAM") == "1":
+    send_telegram("Trump Trading Radar: Test erfolgreich!")
+    raise SystemExit(0)
 if __name__ == "__main__":
     main()
