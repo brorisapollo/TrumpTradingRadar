@@ -1,0 +1,31 @@
+name: Verify Radar
+on:
+  push:
+    paths:
+      - "radar.py"
+      - "tests/**"
+      - ".github/workflows/**"
+  pull_request:
+    paths:
+      - "radar.py"
+      - "tests/**"
+      - ".github/workflows/**"
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest discover -s tests -v
+      - name: Validate configured feed without sending or writing
+        if: github.event_name == 'push'
+        env:
+          TRUMP_FEED_URL: ${{ secrets.TRUMP_FEED_URL }}
+        run: python radar.py --dry-run

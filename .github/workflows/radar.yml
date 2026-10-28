@@ -2,41 +2,48 @@ name: Trump Trading Radar
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Nur Feed pruefen; keine Telegram-Meldungen oder Statusaenderungen"
+        type: boolean
+        default: true
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "2-57/5 * * * *"
+
+# One group across scheduled/manual runs and branches. Never cancel a sender.
+concurrency:
+  group: trump-trading-radar
+  cancel-in-progress: false
 
 permissions:
   contents: write
 
 jobs:
   radar:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-latest
-
+    timeout-minutes: 10
     steps:
-      - name: Repository herunterladen
-        uses: actions/checkout@v4
-
-      - name: Python einrichten
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Radar ausführen
+      - name: Offline regression tests
+        run: python -m unittest discover -s tests -v
+      - name: Radar
         env:
-          TEST_TELEGRAM: "1"
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TRUMP_FEED_URL: ${{ secrets.TRUMP_FEED_URL }}
-        run: python radar.py
-
-      - name: Verarbeitete Beiträge speichern
+          GITHUB_TOKEN: ${{ github.token }}
+          STATE_BRANCH: ${{ github.event.repository.default_branch }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
         run: |
-          if [ -f seen_posts.json ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add seen_posts.json
-            if ! git diff --cached --quiet; then
-              git commit -m "Update processed posts"
-              git push
-            fi
+          if [ "$DRY_RUN" = "true" ]; then
+            python radar.py --dry-run
+          else
+            python radar.py
           fi
