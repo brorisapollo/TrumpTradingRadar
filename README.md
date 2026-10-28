@@ -103,7 +103,11 @@ A check running inside this workflow cannot report when the workflow never start
 repeat runs, competing claims, conflict union, bounded retries, persistence
 failures, ambiguous writes/sends, partial failure, first-run baseline, bad state,
 source/date validation, Telegram API rejection, dry-run side effects and keywords.
-All passed locally on Python 3.14. GitHub verification uses Python 3.12 and performs
+All passed locally on Python 3.14 and in GitHub Actions on Python 3.12.
+[Verified run 40668658504](https://github.com/brorisapollo/TrumpTradingRadar/actions/runs/40668658504)
+on 2026-10-28 fetched the configured feed successfully: 100 unique posts, newest
+age 4.6 hours, two unseen relevant posts. Nothing was sent or saved.
+GitHub verification performs
 a real read-only fetch using the configured feed secret. It never receives the
 Telegram token or writes state. Live sender recovery and real message delivery
 are intentionally not tested by sending messages.
